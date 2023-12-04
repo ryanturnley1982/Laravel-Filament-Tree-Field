@@ -1,24 +1,24 @@
-<x-filament-widgets::widget>
-    <x-filament::section>
-        <!-- Example using Livewire syntax -->
-        <div>
-            <h3>JS Tree</h3>
-            
+<x-dynamic-component
+    :component="$getFieldWrapperView()"
+    :field="$field"
+>
+    <div x-data="{ state: $wire.$entangle('{{ $getStatePath() }}') }">
+        <!-- Interact with the `state` property in Alpine.js -->
+        <input type="hidden" x-model="state" id="tree_result">
+    </div>
+</x-dynamic-component>
+<div id="jstree_plans"></div>
+    
+<div style="padding-top: 20px">
+    <div class="col-md-4 col-sm-8 col-xs-8">
+        <button type="button" class="action-button" onclick="createNode();"> Create Node</button>
+        <button type="button" class="action-button" onclick="renameNode();"> Rename Node</button>
+        <button type="button" class="action-button" onclick="deleteNode();"> Delete Node</button>
+    </div>
+</div>
 
-            <div id="jstree_plans"></div>
-            
-            <div style="padding-top: 20px">
-                <div class="col-md-4 col-sm-8 col-xs-8">
-                    <button type="button" class="action-button" onclick="createNode();"> Create</button>
-                    <button type="button" class="action-button" onclick="renameNode();"> Rename</button>
-                    <button type="button" class="action-button" onclick="deleteNode();"> Delete</button>
-                    <button type="button" class="action-button" onclick="saveNode();"> Save</button>
-                </div>
-            </div>
-        </div>
-    </x-filament::section>
 
-    <style>
+<style>
         h3 {
             margin-bottom: 10px;
             font-weight: bold;
@@ -29,26 +29,26 @@
             border: 1px solid white;
             margin: 5px;
         }
+
+        #tree_result {
+            color: black;
+        }
+
+        input {
+            color: black;
+        }
     </style>
     <script>
-        const initialTree = {
-            "1": {
-                "D": "4"
-            },
-            "2": "NO FIT",
-            "61": {
-                "BT": "R",
-                "BS": "R",
-                "BC": "R",
-                "BR": "R",
-                "BB": "32"
-            },
-            "62": {
-                "BY": "R"
-            }
-        };
-
         document.addEventListener("DOMContentLoaded", function(){
+            let initialTree = null;
+            
+            try {
+                const initialData = '<?= $getRecord() ? $getRecord()[array_reverse(explode('.', $getStatePath()))[0]] : '{}'?>';
+                initialTree = JSON.parse(initialData)
+            } catch (err) {
+                console.log(err)
+            }
+
             $("#jstree_plans").jstree({
                 "core": {
                     "data": format(initialTree),
@@ -74,11 +74,30 @@
                     }
                 },
                 "plugins": [
-                    "contextmenu", "dnd", "search",
                     "state", "types", "wholerow"
                 ]
             });
+
+            $('#jstree_plans').on("set_text.jstree", (obj, text) => {
+                nodeUpdated();
+            });
+
+            $('#jstree_plans').on("create_node.jstree", (obj, text) => {
+                nodeUpdated();
+            });
+
+            $('#jstree_plans').on("delete_node.jstree", (obj, text) => {
+                nodeUpdated();
+            });
+
+            // $('#jstree_plans').on("change", (e) => {
+            //     console.log('changed')
+            // })
         });
+
+        document.getElementById('jstree_plans').addEventListener('alpine:init', (e) => {
+            console.log('changed')
+        })
         
         function createNode() {
             var ref = $('#jstree_plans').jstree(true), sel = ref.get_selected();
@@ -117,6 +136,22 @@
             ref.delete_node(sel);
         };
 
+        function nodeUpdated() {
+            var ref = $('#jstree_plans').jstree(true);
+            var json = ref.get_json('#');
+            const validation = validateNode(json);
+            if (!validation) {
+                return;
+            }
+
+            const normalisedJson = normalise(json);
+            $('#tree_result').val(JSON.stringify(normalisedJson));
+            
+            var element = document.getElementById('tree_result');
+            element.dispatchEvent(new Event('input'));
+            
+        }
+
         function saveNode() {
             var ref = $('#jstree_plans').jstree(true);
             var json = ref.get_json('#');
@@ -127,11 +162,7 @@
             }
 
             const normalisedJson = normalise(json);
-            console.log(normalisedJson);
-
-            // $.post('/plan/save', {
-            //     plan: normalisedJson
-            // }, () => { alert('Successfully saved!') })
+            console.log(normalisedJson)
         }
 
         function normalise(json) {
@@ -165,6 +196,10 @@
         function format(json, parent = "#") {
             const formatted = [];
             let type = '';
+
+            if (!json) {
+                return null;
+            }
             
             if (parent === '#') {
                 type = 'root';
@@ -257,4 +292,3 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.16/jstree.min.js"></script>
-</x-filament-widgets::widget>
