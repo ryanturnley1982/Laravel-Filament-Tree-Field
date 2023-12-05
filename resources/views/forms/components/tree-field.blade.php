@@ -11,7 +11,7 @@
 <div id="jstree_plans"></div>
 </div>
 
-@if($this->getContentTabLabel() != 'View')
+@if(!method_exists($this, 'getContentTabLabel') || $this->getContentTabLabel() != 'View')
 <div style="padding-top: 20px">
     <div class="col-md-4 col-sm-8 col-xs-8">
         <button type="button" class="action-button" onclick="createNode();"> Create Node</button>
