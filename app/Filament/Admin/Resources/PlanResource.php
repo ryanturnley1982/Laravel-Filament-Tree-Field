@@ -40,6 +40,7 @@ class PlanResource extends Resource
                 //
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
@@ -63,6 +64,7 @@ class PlanResource extends Resource
             'index' => Pages\ListPlans::route('/'),
             'create' => Pages\CreatePlan::route('/create'),
             'edit' => Pages\EditPlan::route('/{record}/edit'),
+            'view' => Pages\ViewPlan::route('/{record}'),
         ];
     }
 

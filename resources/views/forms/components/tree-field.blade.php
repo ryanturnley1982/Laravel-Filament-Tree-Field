@@ -7,8 +7,11 @@
         <input type="hidden" x-model="state" id="tree_result">
     </div>
 </x-dynamic-component>
+<div id="jstree_wrapper">
 <div id="jstree_plans"></div>
-    
+</div>
+
+@if($this->getContentTabLabel() != 'View')
 <div style="padding-top: 20px">
     <div class="col-md-4 col-sm-8 col-xs-8">
         <button type="button" class="action-button" onclick="createNode();"> Create Node</button>
@@ -16,6 +19,7 @@
         <button type="button" class="action-button" onclick="deleteNode();"> Delete Node</button>
     </div>
 </div>
+@endif
 
 
 <style>
@@ -40,59 +44,84 @@
     </style>
     <script>
         document.addEventListener("DOMContentLoaded", function(){
-            let initialTree = null;
+            let treeElem = document.getElementById('jstree_plans');
+            const treeWrapper = document.getElementById('jstree_wrapper');
+            const inputElem = document.getElementById('tree_result');
+
+            const syncTree = async () => {
+                const treeData = treeElem.getAttribute('role');
+                const inputData = inputElem.value;
+
+                if (treeData !== 'tree') {
+
+                    treeElem.remove();
+                    treeElem = document.createElement('div')
+                    treeElem.id = "jstree_plans";
+                    treeWrapper.appendChild(treeElem);
+
+                    let initialTree = null;
             
-            try {
-                const initialData = '<?= $getRecord() ? $getRecord()[array_reverse(explode('.', $getStatePath()))[0]] : '{}'?>';
-                initialTree = JSON.parse(initialData)
-            } catch (err) {
-                console.log(err)
-            }
-
-            $("#jstree_plans").jstree({
-                "core": {
-                    "data": format(initialTree),
-                    "check_callback": true,
-                },
-                "types" : {
-                    "#" : {
-                        "max_depth" : 4,
-                        "valid_children" : ["root"]
-                    },
-                    "root" : {
-                        "icon" : "fa fa-home",
-                        "valid_children" : ["folder"]
-                    },
-                    "folder" : {
-                        "max_children": 1,
-                        "icon" : "fa fa-folder",
-                        "valid_children" : ["file"]
-                    },
-                    "file" : {
-                        "icon" : "fa fa-file",
-                        "valid_children" : []
+                    try {
+                        const initialData = !!inputData ? inputData : '<?= $getRecord() ? $getRecord()[array_reverse(explode('.', $getStatePath()))[0]] : '{}'?>';
+                        initialTree = JSON.parse(initialData)
+                    } catch (err) {
+                        console.log(err)
                     }
-                },
-                "plugins": [
-                    "state", "types", "wholerow"
-                ]
-            });
 
-            $('#jstree_plans').on("set_text.jstree", (obj, text) => {
-                nodeUpdated();
-            });
+                    try {
+                        $('#jstree_plans').jstree('destroy');
+                        
+                        $("#jstree_plans").jstree({
+                            "core": {
+                                "data": format(initialTree),
+                                "check_callback": true,
+                            },
+                            "types" : {
+                                "#" : {
+                                    "max_depth" : 4,
+                                    "valid_children" : ["root"]
+                                },
+                                "root" : {
+                                    "icon" : "fa fa-home",
+                                    "valid_children" : ["folder"]
+                                },
+                                "folder" : {
+                                    "max_children": 1,
+                                    "icon" : "fa fa-folder",
+                                    "valid_children" : ["file"]
+                                },
+                                "file" : {
+                                    "icon" : "fa fa-file",
+                                    "valid_children" : []
+                                }
+                            },
+                            "plugins": [
+                                "state", 
+                                "types", 
+                                "wholerow"
+                            ]
+                        });
+                    } catch (err) {
+                        console.log(err)
+                    }
 
-            $('#jstree_plans').on("create_node.jstree", (obj, text) => {
-                nodeUpdated();
-            });
+                    $('#jstree_plans').on("set_text.jstree", (obj, text) => {
+                        nodeUpdated();
+                    });
 
-            $('#jstree_plans').on("delete_node.jstree", (obj, text) => {
-                nodeUpdated();
-            });
+                    $('#jstree_plans').on("create_node.jstree", (obj, text) => {
+                        nodeUpdated();
+                    });
 
-            // $('#jstree_plans').on("change", (e) => {
-            //     console.log('changed')
-            // })
+                    $('#jstree_plans').on("delete_node.jstree", (obj, text) => {
+                        nodeUpdated();
+                    });
+                }
+
+            }
+            const treeObserver = new MutationObserver(syncTree);
+            treeObserver.observe(treeWrapper, { attributes: true, childList: false, subtree: true, attributeFilter: ['role'] })
+            syncTree();
         });
 
         document.getElementById('jstree_plans').addEventListener('alpine:init', (e) => {
@@ -288,7 +317,7 @@
         }
     </script>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.16/themes/default/style.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.12.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.16/jstree.min.js"></script>
+    <link rel="stylesheet" href="/css/style.min.css" />
+    <link rel="stylesheet" href="/css/font-awesome.css">
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/jstree.min.js"></script>

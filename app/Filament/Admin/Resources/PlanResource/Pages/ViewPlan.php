@@ -4,12 +4,12 @@ namespace App\Filament\Admin\Resources\PlanResource\Pages;
 
 use App\Filament\Admin\Resources\PlanResource;
 use Filament\Actions;
-use Filament\Resources\Pages\EditRecord;
+use Filament\Resources\Pages\ViewRecord;
 
-class EditPlan extends EditRecord
+class ViewPlan extends ViewRecord
 {
     protected static string $resource = PlanResource::class;
-
+    
     protected function getHeaderActions(): array
     {
         return [
